@@ -1,5 +1,5 @@
 const express = require("express");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const dotenv = require("dotenv");
 
 dotenv.config();
@@ -27,6 +27,18 @@ async function run() {
     
     const db = client.db('wanderlust');
     const destinationsCollection = db.collection('destinations');
+
+
+    app.get('/destination', async (req, res) => {
+      const result = await destinationsCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get('/destination/:id', async (req, res) => {
+      const id = req.params.id;
+      const result = await destinationsCollection.findOne({ _id: new ObjectId(id) });
+      res.json(result);
+    });
 
     app.post('/destination', async (req, res) => {
       const destinationData = req.body;
