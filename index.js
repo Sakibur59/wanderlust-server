@@ -37,16 +37,24 @@ async function run() {
       const result = await destinationsCollection.findOne({
         _id: new ObjectId(id),
       });
-      res.json(result);
+      res.send(result);
     });
     app.patch("/destination/:id", async (req, res) => {
-      const id = req.params.id;
+      const id = req.params;
       const updatedData = req.body;
       const result = await destinationsCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: updatedData },
       );
-      res.json(result);
+      res.send(result);
+    });
+
+    app.delete("/destination/:id", async (req, res) => {
+      const id = req.params;
+      const result = await destinationsCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
     });
 
     app.post("/destination", async (req, res) => {
