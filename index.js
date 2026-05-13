@@ -79,7 +79,13 @@ async function run() {
       res.send(result);
     });
 
-    
+    app.delete("/booking/:bookingId", async (req, res) => {
+      const { bookingId } = req.params;
+      const result = await bookingsCollection.deleteOne({
+        _id: new ObjectId(bookingId),
+      });
+      res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
