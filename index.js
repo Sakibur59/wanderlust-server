@@ -26,6 +26,7 @@ async function run() {
 
     const db = client.db("wanderlust");
     const destinationsCollection = db.collection("destinations");
+    const bookingsCollection = db.collection("bookings");
 
     app.get("/destination", async (req, res) => {
       const result = await destinationsCollection.find().toArray();
@@ -61,6 +62,14 @@ async function run() {
       const destinationData = req.body;
       console.log("Received destination data:", destinationData);
       const result = await destinationsCollection.insertOne(destinationData);
+      res.send(result);
+    });
+
+
+    app.post("/booking", async (req, res) => {
+      const bookingData = req.body;
+      console.log("Received booking data:", bookingData);
+      const result = await bookingsCollection.insertOne(bookingData);
       res.send(result);
     });
 
