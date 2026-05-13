@@ -66,12 +66,20 @@ async function run() {
     });
 
 
+    app.get("/booking/:userId", async (req, res) => {
+      const {userId} = req.params;
+      const result = await bookingsCollection.find({ userId: userId }).toArray();
+      res.send(result);
+    });
+
     app.post("/booking", async (req, res) => {
       const bookingData = req.body;
       console.log("Received booking data:", bookingData);
       const result = await bookingsCollection.insertOne(bookingData);
       res.send(result);
     });
+
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log(
