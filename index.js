@@ -35,11 +35,13 @@ async function run() {
 
     app.get("/destination/:id", (req,res,next)=>{
       const header = req.headers.authorization;
-    if(header==="logged in"){
-      next();
-    } else{
-      res.status(401).send({message:"Unauthorized"});
-    }
+    // if(header==="logged in"){
+    //   next();
+    // } else{
+    //   res.status(401).send({message:"Unauthorized"});
+    // }
+    console.log("Authorization header:", header);
+    next();
 
 
     },async (req, res) => {
