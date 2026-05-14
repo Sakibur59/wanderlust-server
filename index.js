@@ -33,7 +33,16 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/destination/:id", async (req, res) => {
+    app.get("/destination/:id", (req,res,next)=>{
+      const header = req.headers.authorization;
+    if(header==="logged in"){
+      next();
+    } else{
+      res.status(401).send({message:"Unauthorized"});
+    }
+
+
+    },async (req, res) => {
       const id = req.params.id;
       const result = await destinationsCollection.findOne({
         _id: new ObjectId(id),
