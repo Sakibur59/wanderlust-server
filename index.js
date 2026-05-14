@@ -6,6 +6,7 @@ dotenv.config();
 const uri = process.env.MONGO_DB_URI;
 const app = express();
 const cors = require("cors");
+const { createRemoteJWKSet, jwtVerify } = require("jose-cjs");
 
 app.use(cors());
 app.use(express.json());
@@ -20,6 +21,34 @@ const client = new MongoClient(uri, {
   },
 });
 
+const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"))
+
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized" });
+  }
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized" });
+  }
+  // if(authHeader==="logged in"){
+  //   next();
+  // } else{
+  //   res.status(401).send({message:"Unauthorized"});
+  // }
+
+  try{
+    const {payload} = await jwtVerify(token, JWKS);
+    console.log("Token payload:", payload);
+    next();
+  }
+  catch(error){
+    return res.status(401).send({ message: "Unauthorized" });
+  } 
+};
+
 async function run() {
   try {
     await client.connect();
@@ -33,26 +62,15 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/destination/:id", (req,res,next)=>{
-      const header = req.headers.authorization;
-    // if(header==="logged in"){
-    //   next();
-    // } else{
-    //   res.status(401).send({message:"Unauthorized"});
-    // }
-    console.log("Authorization header:", header);
-    next();
-
-
-    },async (req, res) => {
+    app.get("/destination/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const result = await destinationsCollection.findOne({
         _id: new ObjectId(id),
       });
       res.send(result);
     });
-    app.patch("/destination/:id", async (req, res) => {
-      const id = req.params;
+    app.patch("/destination/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
       const updatedData = req.body;
       const result = await destinationsCollection.updateOne(
         { _id: new ObjectId(id) },
@@ -76,10 +94,11 @@ async function run() {
       res.send(result);
     });
 
-
     app.get("/booking/:userId", async (req, res) => {
-      const {userId} = req.params;
-      const result = await bookingsCollection.find({ userId: userId }).toArray();
+      const { userId } = req.params;
+      const result = await bookingsCollection
+        .find({ userId: userId })
+        .toArray();
       res.send(result);
     });
 
