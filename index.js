@@ -21,8 +21,9 @@ const client = new MongoClient(uri, {
   },
 });
 
-const JWKS = createRemoteJWKSet(new URL("http://localhost:3000/api/auth/jwks"))
-
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req?.headers.authorization;
@@ -39,23 +40,27 @@ const verifyToken = async (req, res, next) => {
   //   res.status(401).send({message:"Unauthorized"});
   // }
 
-  try{
-    const {payload} = await jwtVerify(token, JWKS);
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
     console.log("Token payload:", payload);
     next();
-  }
-  catch(error){
+  } catch (error) {
     return res.status(401).send({ message: "Unauthorized" });
-  } 
+  }
 };
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("wanderlust");
     const destinationsCollection = db.collection("destinations");
     const bookingsCollection = db.collection("bookings");
+
+    app.get("/featured", async (req, res) => {
+      const result = await destinationsCollection.find().limit(4).toArray();
+      res.send(result);
+    });
 
     app.get("/destination", async (req, res) => {
       const result = await destinationsCollection.find().toArray();
@@ -94,7 +99,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/booking/:userId", async (req, res) => {
+    app.get("/booking/:userId", verifyToken, async (req, res) => {
       const { userId } = req.params;
       const result = await bookingsCollection
         .find({ userId: userId })
@@ -102,14 +107,14 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/booking", async (req, res) => {
+    app.post("/booking", verifyToken, async (req, res) => {
       const bookingData = req.body;
       console.log("Received booking data:", bookingData);
       const result = await bookingsCollection.insertOne(bookingData);
       res.send(result);
     });
 
-    app.delete("/booking/:bookingId", async (req, res) => {
+    app.delete("/booking/:bookingId", verifyToken, async (req, res) => {
       const { bookingId } = req.params;
       const result = await bookingsCollection.deleteOne({
         _id: new ObjectId(bookingId),
@@ -117,7 +122,7 @@ async function run() {
       res.send(result);
     });
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
