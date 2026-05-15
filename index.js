@@ -66,7 +66,7 @@ async function run() {
       const result = await destinationsCollection.find().toArray();
       res.send(result);
     });
-
+    app.get("/health", (req, res) => res.send("OK"));
     app.get("/destination/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const result = await destinationsCollection.findOne({
